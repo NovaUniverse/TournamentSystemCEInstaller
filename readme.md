@@ -17,7 +17,7 @@ Before downloading make sure you have docker installed https://www.docker.com/ge
 * Download the installer from the releases page https://github.com/NovaUniverse/TournamentSystemCEInstaller/releases/
 * Put the installer jar in a the folder you want the tournament to be installed to
 * Open cmd and navigate into the folder
-* Run `java -jar TournamentSystemInstaller.jar <Version>` Replace &lt;version&gt; with the version you want to run. [Available versions can be found here](https://novauniverse.s3.amazonaws.com/tournamentsystem/ce/versions.json)
+* Run `java -jar TournamentSystemCEInstaller.jar <Version>` Replace &lt;version&gt; with the version you want to run. [Available versions can be found here](https://novauniverse.s3.amazonaws.com/tournamentsystem/ce/versions.json)
 To start and stop the tournament use start.bat and stop.bat
 
 # Logging in to the admin ui
