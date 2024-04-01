@@ -5,19 +5,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.json.JSONArray;
+
 import net.novauniverse.tournamentsystem.installer.config.InstallerConfig;
 import net.novauniverse.tournamentsystem.installer.utils.DockerUtils;
 import net.novauniverse.tournamentsystem.installer.utils.DownloadUtils;
 import net.novauniverse.tournamentsystem.installer.utils.FileUtils;
+import net.novauniverse.tournamentsystem.installer.utils.HttpUtils;
 import net.novauniverse.tournamentsystem.installer.utils.RandomUtils;
 
-public class TournamentInstaller implements Runnable {
+public class TournamentInstaller {
 	public static void main(String[] args) {
-		new TournamentInstaller().run();
-	}
-
-	@Override
-	public void run() {
 		System.out.println("Checking requirements...");
 		if (!DockerUtils.isDockerInstalled()) {
 			System.err.println("Docker is not installed on this system. Please install it from https://www.docker.com/get-started/");
@@ -29,11 +27,50 @@ public class TournamentInstaller implements Runnable {
 			System.exit(1);
 		}
 
+		System.out.println("Fetching version list...");
+		JSONArray versions = null;
+		try {
+			String versionDataString = HttpUtils.get(InstallerConfig.VERSION_MANIFEST_URL);
+			if (versionDataString == null) {
+				System.exit(1);
+			}
+			versions = new JSONArray(versionDataString);
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("An error occued while fetching version info");
+			System.exit(1);
+		}
+
+		String[] versionStringArray = new String[versions.length()];
+		for (int i = 0; i < versions.length(); i++) {
+			versionStringArray[i] = versions.getString(i);
+		}
+
+		if (args.length == 0) {
+			System.err.println("Please provide what version you want to download. Valid versions are: " + String.join(", ", versionStringArray));
+			System.exit(1);
+		}
+
+		String selectedVersion = args[0];
+		boolean isValid = false;
+		for (int i = 0; i < versions.length(); i++) {
+			if (selectedVersion.equals(versions.get(i))) {
+				isValid = true;
+				break;
+			}
+		}
+
+		if (!isValid) {
+			System.err.println("Invalid version: " + selectedVersion + ". Valid ones are: " + String.join(", ", versionStringArray));
+			System.exit(1);
+		}
+
 		File dockerFile = new File("docker-compose.yml");
+		String versionUrl = InstallerConfig.DOCKER_COMPOSE_URL.replace("%version%", selectedVersion);
 		if (!dockerFile.exists()) {
-			System.out.println("Trying to download docker-conpose.yml from " + InstallerConfig.DOCKER_COMPOSE_URL);
+			System.out.println("Trying to download docker-conpose.yml from " + versionUrl);
 			try {
-				DownloadUtils.downloadFile(InstallerConfig.DOCKER_COMPOSE_URL, dockerFile.getAbsolutePath());
+				DownloadUtils.downloadFile(versionUrl, dockerFile.getAbsolutePath());
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.println("Download failed");
